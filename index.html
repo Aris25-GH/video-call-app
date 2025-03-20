@@ -9,13 +9,25 @@
 <body>
     <div class="container">
         <h1>Video Call App</h1>
+        <div class="user-id-section">
+            <label for="userId">Your User ID:</label>
+            <input type="text" id="userId" readonly>
+            <button id="copyUserId">Copy ID</button>
+        </div>
+        <div class="call-section">
+            <label for="remoteUserId">Enter Remote User ID:</label>
+            <input type="text" id="remoteUserId">
+            <button id="startCall">Start Call</button>
+            <button id="endCall" disabled>End Call</button>
+        </div>
         <div class="video-container">
             <video id="localVideo" autoplay muted></video>
             <video id="remoteVideo" autoplay></video>
         </div>
         <div class="controls">
-            <button id="startCall">Start Call</button>
-            <button id="endCall" disabled>End Call</button>
+            <button id="muteAudio">Mute Audio</button>
+            <button id="muteVideo">Mute Video</button>
+            <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="1">
         </div>
     </div>
 
