@@ -17,8 +17,8 @@ let localKeyPair;
 let remotePublicKey;
 let userId;
 
-// WebSocket signaling server URL
-const signalingServerUrl = 'ws://localhost:8080';
+// Render signaling server URL (secure WebSocket over 443)
+const signalingServerUrl = 'wss://video-call-app-pizq.onrender.com';
 
 // WebRTC configuration
 const configuration = {
@@ -38,7 +38,11 @@ function initSignaling() {
         const data = JSON.parse(message.data);
 
         if (data.type === 'offer') {
-            await handleOffer(data.offer, data.senderId);
+            // Show incoming call alert
+            const acceptCall = confirm(`Incoming call from ${data.senderId}. Do you want to accept?`);
+            if (acceptCall) {
+                await handleOffer(data.offer, data.senderId);
+            }
         } else if (data.type === 'answer') {
             await handleAnswer(data.answer);
         } else if (data.type === 'candidate') {
