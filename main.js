@@ -2,6 +2,12 @@ const localVideo = document.getElementById('localVideo');
 const remoteVideo = document.getElementById('remoteVideo');
 const startCallButton = document.getElementById('startCall');
 const endCallButton = document.getElementById('endCall');
+const userIdInput = document.getElementById('userId');
+const remoteUserIdInput = document.getElementById('remoteUserId');
+const copyUserIdButton = document.getElementById('copyUserId');
+const muteAudioButton = document.getElementById('muteAudio');
+const muteVideoButton = document.getElementById('muteVideo');
+const volumeControl = document.getElementById('volumeControl');
 
 let localStream;
 let remoteStream;
@@ -9,6 +15,7 @@ let peerConnection;
 let signalingSocket;
 let localKeyPair;
 let remotePublicKey;
+let userId;
 
 // WebSocket signaling server URL
 const signalingServerUrl = 'ws://localhost:8080';
@@ -18,6 +25,11 @@ const configuration = {
     iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
 };
 
+// Generate a unique user ID
+function generateUserId() {
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+}
+
 // Initialize WebSocket connection
 function initSignaling() {
     signalingSocket = new WebSocket(signalingServerUrl);
@@ -26,7 +38,7 @@ function initSignaling() {
         const data = JSON.parse(message.data);
 
         if (data.type === 'offer') {
-            await handleOffer(data.offer);
+            await handleOffer(data.offer, data.senderId);
         } else if (data.type === 'answer') {
             await handleAnswer(data.answer);
         } else if (data.type === 'candidate') {
@@ -39,6 +51,12 @@ function initSignaling() {
 
 // Start the call
 startCallButton.addEventListener('click', async () => {
+    const remoteUserId = remoteUserIdInput.value;
+    if (!remoteUserId) {
+        alert('Please enter a remote user ID.');
+        return;
+    }
+
     startCallButton.disabled = true;
     endCallButton.disabled = false;
 
@@ -56,17 +74,30 @@ startCallButton.addEventListener('click', async () => {
 
     peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-            signalingSocket.send(JSON.stringify({ type: 'candidate', candidate: event.candidate }));
+            signalingSocket.send(JSON.stringify({
+                type: 'candidate',
+                candidate: event.candidate,
+                recipientId: remoteUserId
+            }));
         }
     };
 
     // Generate encryption keys
     localKeyPair = nacl.box.keyPair();
-    signalingSocket.send(JSON.stringify({ type: 'key', key: Array.from(localKeyPair.publicKey) }));
+    signalingSocket.send(JSON.stringify({
+        type: 'key',
+        key: Array.from(localKeyPair.publicKey),
+        recipientId: remoteUserId
+    }));
 
     const offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
-    signalingSocket.send(JSON.stringify({ type: 'offer', offer: offer }));
+    signalingSocket.send(JSON.stringify({
+        type: 'offer',
+        offer: offer,
+        senderId: userId,
+        recipientId: remoteUserId
+    }));
 });
 
 // End the call
@@ -75,7 +106,7 @@ endCallButton.addEventListener('click', () => {
 });
 
 // Handle incoming offer
-async function handleOffer(offer) {
+async function handleOffer(offer, senderId) {
     if (!peerConnection) {
         peerConnection = new RTCPeerConnection(configuration);
         peerConnection.ontrack = (event) => {
@@ -84,7 +115,11 @@ async function handleOffer(offer) {
         };
         peerConnection.onicecandidate = (event) => {
             if (event.candidate) {
-                signalingSocket.send(JSON.stringify({ type: 'candidate', candidate: event.candidate }));
+                signalingSocket.send(JSON.stringify({
+                    type: 'candidate',
+                    candidate: event.candidate,
+                    recipientId: senderId
+                }));
             }
         };
     }
@@ -92,7 +127,11 @@ async function handleOffer(offer) {
     await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
     const answer = await peerConnection.createAnswer();
     await peerConnection.setLocalDescription(answer);
-    signalingSocket.send(JSON.stringify({ type: 'answer', answer: answer }));
+    signalingSocket.send(JSON.stringify({
+        type: 'answer',
+        answer: answer,
+        recipientId: senderId
+    }));
 }
 
 // Handle incoming answer
@@ -123,5 +162,43 @@ function endCall() {
     endCallButton.disabled = true;
 }
 
-// Initialize signaling when the page loads
+// Copy user ID to clipboard
+copyUserIdButton.addEventListener('click', () => {
+    userIdInput.select();
+    document.execCommand('copy');
+    alert('User ID copied to clipboard!');
+});
+
+// Mute/unmute audio
+muteAudioButton.addEventListener('click', () => {
+    const audioTrack = localStream.getAudioTracks()[0];
+    if (audioTrack.enabled) {
+        audioTrack.enabled = false;
+        muteAudioButton.textContent = 'Unmute Audio';
+    } else {
+        audioTrack.enabled = true;
+        muteAudioButton.textContent = 'Mute Audio';
+    }
+});
+
+// Mute/unmute video
+muteVideoButton.addEventListener('click', () => {
+    const videoTrack = localStream.getVideoTracks()[0];
+    if (videoTrack.enabled) {
+        videoTrack.enabled = false;
+        muteVideoButton.textContent = 'Unmute Video';
+    } else {
+        videoTrack.enabled = true;
+        muteVideoButton.textContent = 'Mute Video';
+    }
+});
+
+// Adjust volume
+volumeControl.addEventListener('input', () => {
+    remoteVideo.volume = volumeControl.value;
+});
+
+// Initialize signaling and generate user ID
+userId = generateUserId();
+userIdInput.value = userId;
 initSignaling();
