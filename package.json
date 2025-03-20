@@ -1,0 +1,12 @@
+{
+  "name": "video-call-app",
+  "version": "1.0.0",
+  "description": "A simple video calling app with WebRTC and WebSocket",
+  "main": "signaling-server.js",
+  "scripts": {
+    "start": "node signaling-server.js"
+  },
+  "dependencies": {
+    "ws": "^8.0.0"
+  }
+}
