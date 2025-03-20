@@ -15,10 +15,48 @@ body {
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 90%;
+    max-width: 600px;
 }
 
 h1 {
     color: #333;
+}
+
+.user-id-section, .call-section {
+    margin-bottom: 20px;
+}
+
+input[type="text"] {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 200px;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 5px;
+}
+
+#startCall {
+    background-color: #28a745;
+    color: white;
+}
+
+#endCall {
+    background-color: #dc3545;
+    color: white;
+}
+
+button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
 }
 
 .video-container {
@@ -37,26 +75,6 @@ video {
     margin-top: 20px;
 }
 
-button {
-    padding: 10px 20px;
-    font-size: 16px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    margin: 0 10px;
-}
-
-#startCall {
-    background-color: #28a745;
-    color: white;
-}
-
-#endCall {
-    background-color: #dc3545;
-    color: white;
-}
-
-button:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
+#volumeControl {
+    width: 100px;
 }
